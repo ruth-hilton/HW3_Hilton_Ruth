@@ -13,13 +13,13 @@ For this mapping assignment, I have decided to continue working with the Interna
 
 ```{r message=FALSE}
 #load libraries
+library(readr)
 library(dplyr)
 library(tibble)
 library(ggplot2)
 library(maps)
 library(rworldmap) 
 library(viridis)
-library(mapproj)
 library(plotly)
 ```
 
@@ -36,11 +36,10 @@ winnerdata[winnerdata == "CZS"] <- "CZE"
 winnerdata[winnerdata == "YUG"] <- "SRB"
 numberwins <- count(winnerdata, country)
 colnames(numberwins) <- c("country", "wins")
-numberwins
 ```
 This was my first attempt at a choropleth map with a basic version of the map using the `rworldmap` package. 
 
-```{r} 
+```{r message=FALSE} 
 #join data set with the mapping data
 winmap <- joinCountryData2Map(numberwins, nameJoinColumn = "country", mapResolution = "coarse")
 mapCountryData(winmap, nameColumnToPlot="wins", catMethod="fixedWidth", borderCol = "black",
