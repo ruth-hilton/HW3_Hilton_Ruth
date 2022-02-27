@@ -9,12 +9,6 @@ knit: (function(input_file, encoding) {
  output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
 ---
 
-*Create a map. The map can display any data and message you want. 
-  *data source
-  *spatial units being displayed
-  *what you are trying to communicate
-  *what decisions you made and why you made those to best communicate the data.
-
 For this mapping assignment, I have decided to continue working with the International Mathematics Competition (IMO) data set that I began working with on HW2. This data shows the name, countries, scores and ranks of all IMO winners from 1984-2017 and was downloaded from Kaggle.com, but the full results can also be accessed directly imo-official.com. For the map below, I decided to display the number of IMO individual winners from each of the countries available in order to communicate how well individuals from different countries tend to do in this specific type of mathematics. 
 
 ```{r message=FALSE}
