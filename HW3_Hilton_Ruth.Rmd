@@ -1,0 +1,80 @@
+---
+title: "HW3_Hilton_Ruth"
+author: "Ruth Hilton"
+output: html_document
+knit: (function(input_file, encoding) {
+  out_dir <- 'docs';
+  rmarkdown::render(input_file,
+ encoding=encoding,
+ output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
+---
+
+*Create a map. The map can display any data and message you want. 
+  *data source
+  *spatial units being displayed
+  *what you are trying to communicate
+  *what decisions you made and why you made those to best communicate the data.
+
+For this mapping assignment, I have decided to continue working with the International Mathematics Competition (IMO) data set that I began working with on HW2. This data shows the name, countries, scores and ranks of all IMO winners from 1984-2017 and was downloaded from Kaggle.com, but the full results can also be accessed directly imo-official.com. For the map below, I decided to display the number of IMO individual winners from each of the countries available in order to communicate how well individuals from different countries tend to do in this specific type of mathematics. 
+
+```{r message=FALSE}
+#load libraries
+library(dplyr)
+library(tibble)
+library(ggplot2)
+library(maps)
+library(rworldmap) 
+library(viridis)
+library(mapproj)
+library(plotly)
+```
+
+In cleaning and importing my data, I found I needed to combine values that fit with current ISO-3 country codes since borders and countries have changed a lot after WWI and WWII, and certain older country codes have been updated compared to the IMO's database (e.g. UNK is now GBR). I used http://imo-official.com/countries.aspx and https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3 to cross reference the country codes from IMO and the most current ISO codes, and to research winners from large countries that have since been broken into smaller regions (e.g. Yugoslavia, Czechoslovakia, etc). I first made some bulk country code change decisions: I chose to combine GDR and GER into modern DEU (Germany), and combined USS and CIS into modern RUS (Russia), even though some winners may come from countries now outside of the current German or Russian borders. With YUG (Yugoslavia) and CZS (Czechoslovakia), since they each had 1 win since 1984, I was able to research the individual winners from CZS and YUG and assign them to their correct modern home country. 
+
+```{r}
+#import and prep individual winner data
+fullrankdata <- read_csv("imo_results.csv", show_col_types = FALSE) %>% select(country,rank) %>% group_by(country) 
+winnerdata <- fullrankdata %>% filter(rank==1)
+winnerdata[winnerdata == "UNK"] <- "GBR"
+winnerdata[winnerdata == "GDR" | winnerdata == "GER"] <- "DEU"
+winnerdata[winnerdata == "USS" | winnerdata == "CIS"] <- "RUS"
+winnerdata[winnerdata == "CZS"] <- "CZE"
+winnerdata[winnerdata == "YUG"] <- "SRB"
+numberwins <- count(winnerdata, country)
+colnames(numberwins) <- c("country", "wins")
+numberwins
+```
+This was my first attempt at a choropleth map with a basic version of the map using the `rworldmap` package. 
+
+```{r} 
+#join data set with the mapping data
+winmap <- joinCountryData2Map(numberwins, nameJoinColumn = "country", mapResolution = "coarse")
+mapCountryData(winmap, nameColumnToPlot="wins", catMethod="fixedWidth", borderCol = "black",
+               missingCountryCol = "grey", mapTitle = "Number of IMO Wins since 1984")
+```
+
+In the map above it is difficult to differentiate the values within Europe due to the small country sizes, so I chose to make an interactive map with `plotly` which allows for both zooming and hover text to be available to help with readability. 
+
+```{r}
+#create base map geometry
+g <- list(
+  scope = 'world',
+  projection = list(type = "natural earth")
+)
+#create world map with plotly 
+map <- plot_geo(numberwins, locationmode = 'world')
+#add choropleth and trace features
+map <- map %>% add_trace(
+    z = ~wins, text = "winners", locations = ~country,
+    color = ~wins, colorscale = 'Viridis', reversescale = TRUE
+  )
+#modify formatting and labels
+map <- map %>% colorbar(title = "Number of Winners")
+map <- map %>% layout(
+    title = 'Number of International Mathematics Competition Winners<br>since 1984 by Country of Origin',
+    geo = g
+)
+map
+```
+
+*Data Sources: https://www.kaggle.com/luckyt/imo-scores, http://imo-official.com/.*
